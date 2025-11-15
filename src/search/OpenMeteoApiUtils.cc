@@ -105,5 +105,22 @@ WeatherInfoVector LoadHistoricalWeather(
    const std::string response = client.Get(request);
    return !response.empty() ? parseWeatherResponse(response) : WeatherInfoVector{};
 }
+OsmNodes LoadTourismNodesForRelation(WebClient& client, OsmId relationId)
+{
+    const std::string query = std::format(
+        "[out:json][timeout:60];"
+        "rel({});"
+        "map_to_area;"
+        "("
+        "  node(area)[\"tourism\"=\"hotel\"];"
+        "  node(area)[\"tourism\"=\"museum\"];"
+        ");"
+        "out tags center;",
+        relationId
+    );
 
+    const std::string response = client.Post(query);
+
+    return ExtractNodes(response);
+}
 }  // namespace geo::openmeteo
