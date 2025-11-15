@@ -91,28 +91,38 @@ GeoProtoPlaces findCities(const overpass::OsmIds& relationIds, nominatim::Match 
       {
          if (includeDetails)
 {
-    const auto details = overpass::LoadCityDetails(i.osm_id, m_overpassApiClient);
-    
-    for (const auto& detail : details)
+  if (includeDetails)
+{
+    // Загрузить все узлы отелей/музеев через Overpass
+    auto objects = overpass::LoadTourismNodesForRelation(overpassApiClient, i.relationId);
+
+    for (const auto& n : objects)
     {
-        auto* feature = city.add_features();
-        feature->mutable_position()->set_latitude(detail.latitude);
-        feature->mutable_position()->set_longitude(detail.longitude);
-        
-        auto& tags = *feature->mutable_tags();
-        tags["tourism"] = detail.tourism_type;
-        
-        if (!detail.name.empty())
-            tags["name"] = detail.name;
-            
-        if (!detail.name_en.empty())
-            tags["name:en"] = detail.name_en;
+        GeoProtoFeature* f = city.add_features();
+
+        // координаты
+        f->mutable_position()->set_latitude(n.lat);
+        f->mutable_position()->set_longitude(n.lon);
+
+        // теги
+        auto& tags = *f->mutable_tags();
+
+        // tourism=hotel/museum — всегда присутствует
+        auto it = n.tags.find("tourism");
+        if (it != n.tags.end())
+            tags["tourism"] = it->second;
+
+        // name (может отсутствовать)
+        it = n.tags.find("name");
+        if (it != n.tags.end())
+            tags["name"] = it->second;
+
+        // name:en (может отсутствовать)
+        it = n.tags.find("name:en");
+        if (it != n.tags.end())
+            tags["name:en"] = it->second;
     }
 }
-      }
-      result.emplace_back(std::move(city));
-   }
-   return result;
 }
 
 // Formats an Overpass API request string based on region preferences and bounding box
