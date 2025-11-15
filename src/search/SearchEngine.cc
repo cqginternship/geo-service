@@ -89,7 +89,26 @@ GeoProtoPlaces findCities(const overpass::OsmIds& relationIds, nominatim::Match 
       GeoProtoPlace city = toGeoProtoPlace(i);
       if (includeDetails)
       {
-         // TODO
+         if (includeDetails)
+{
+    const auto details = overpass::LoadCityDetails(i.osm_id, m_overpassApiClient);
+    
+    for (const auto& detail : details)
+    {
+        auto* feature = city.add_features();
+        feature->mutable_position()->set_latitude(detail.latitude);
+        feature->mutable_position()->set_longitude(detail.longitude);
+        
+        auto& tags = *feature->mutable_tags();
+        tags["tourism"] = detail.tourism_type;
+        
+        if (!detail.name.empty())
+            tags["name"] = detail.name;
+            
+        if (!detail.name_en.empty())
+            tags["name:en"] = detail.name_en;
+    }
+}
       }
       result.emplace_back(std::move(city));
    }
