@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -12,25 +13,25 @@ class WebClient;
 namespace geo::overpass
 {
 
-using OsmId = std::int64_t;         // Type alias for OpenStreetMap (OSM) IDs.
-using OsmIds = std::vector<OsmId>;  // Type alias for a list of OSM IDs.
+using OsmId = std::int64_t;
+using OsmIds = std::vector<OsmId>;
+struct OsmNode
+{
+    double lat = 0.0;
+    double lon = 0.0;
+    std::map<std::string, std::string> tags;
+};
 
-// Extracts all IDs of entities with type "relation" from a JSON response.
-// @param json: The JSON response from the Overpass API.
-// @return: A list of OSM IDs for the relations found.
+using OsmNodes = std::vector<OsmNode>;
+
 OsmIds ExtractRelationIds(const std::string& json);
 
-// Finds relation IDs by name using the Overpass API.
-// @param client: WebClient instance to interact with the Overpass API.
-// @param name: The name to search for.
-// @return: A list of OSM IDs for the relations found.
+OsmNodes ExtractNodes(const std::string& json);
+
 OsmIds LoadRelationIdsByName(WebClient& client, const std::string& name);
 
-// Finds relation IDs by location (latitude/longitude) using the Overpass API.
-// @param client: WebClient instance to interact with the Overpass API.
-// @param latitude: The latitude of the location.
-// @param longitude: The longitude of the location.
-// @return: A list of OSM IDs for the relations found.
 OsmIds LoadRelationIdsByLocation(WebClient& client, double latitude, double longitude);
+
+OsmNodes LoadTourismNodesForRelation(WebClient& client, OsmId relationId);
 
 }  // namespace geo::overpass

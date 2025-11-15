@@ -89,11 +89,40 @@ GeoProtoPlaces findCities(const overpass::OsmIds& relationIds, nominatim::Match 
       GeoProtoPlace city = toGeoProtoPlace(i);
       if (includeDetails)
       {
-         // TODO
-      }
-      result.emplace_back(std::move(city));
-   }
-   return result;
+         if (includeDetails)
+{
+  if (includeDetails)
+{
+    // Загрузить все узлы отелей/музеев через Overpass
+    auto objects = overpass::LoadTourismNodesForRelation(overpassApiClient, i.relationId);
+
+    for (const auto& n : objects)
+    {
+        GeoProtoFeature* f = city.add_features();
+
+        // координаты
+        f->mutable_position()->set_latitude(n.lat);
+        f->mutable_position()->set_longitude(n.lon);
+
+        // теги
+        auto& tags = *f->mutable_tags();
+
+        // tourism=hotel/museum — всегда присутствует
+        auto it = n.tags.find("tourism");
+        if (it != n.tags.end())
+            tags["tourism"] = it->second;
+
+        // name (может отсутствовать)
+        it = n.tags.find("name");
+        if (it != n.tags.end())
+            tags["name"] = it->second;
+
+        // name:en (может отсутствовать)
+        it = n.tags.find("name:en");
+        if (it != n.tags.end())
+            tags["name:en"] = it->second;
+    }
+}
 }
 
 // Formats an Overpass API request string based on region preferences and bounding box
